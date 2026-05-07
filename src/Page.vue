@@ -137,7 +137,7 @@
 import axios from 'axios'
 import { computed, onMounted, ref } from 'vue'
 
-const api = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+const api = (import.meta.env.VITE_API_URL || 'https://sistema-inventario-backend-hrj1.onrender.com').replace(/\/$/, '')
 
 const produtos = ref([])
 const editando = ref(false)

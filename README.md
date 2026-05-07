@@ -9,7 +9,7 @@ Aplicacao Vue para o sistema de inventario.
 3. Configure a variavel `VITE_API_URL` com a URL publica do backend, por exemplo:
 
 ```bash
-VITE_API_URL=https://SEU-BACKEND.up.railway.app
+VITE_API_URL=https://sistema-inventario-backend-hrj1.onrender.com
 ```
 
 Depois de alterar `VITE_API_URL`, faca redeploy do frontend para o Vite incluir a nova URL no build.
