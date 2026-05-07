@@ -1,135 +1,109 @@
 <template>
-  <main class="page-shell">
-    <section class="workspace">
-      <header class="hero">
-        <div class="hero-copy">
-          <span class="eyebrow">Inventario boutique</span>
-          <h1>Controle de estoque</h1>
-          <p>Organize produtos, quantidades e valores num painel delicado e facil de consultar.</p>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <h1 class="page-title">Inventario</h1>
+        <p class="page-sub">Gestao de estoque</p>
+      </div>
+      <div class="status" :class="{ danger: mensagemErro }">
+        <span class="dot"></span>
+        {{ mensagemErro || 'Sincronizado' }}
+      </div>
+    </header>
+
+    <section class="metrics" aria-label="Resumo do inventario">
+      <article class="metric">
+        <div class="metric-label">Produtos</div>
+        <div class="metric-value">{{ totalProdutos }}</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Unidades</div>
+        <div class="metric-value">{{ totalUnidades }}</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Valor total</div>
+        <div class="metric-value accent">{{ formatarMoeda(valorTotal) }}</div>
+      </article>
+    </section>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div>
+          <h2>Produtos em estoque</h2>
+          <span>{{ totalProdutos }} {{ totalProdutos === 1 ? 'item registado' : 'itens registados' }}</span>
         </div>
+        <button class="btn-add" type="button" @click="abrirModal">
+          + Novo produto
+        </button>
+      </div>
 
-        <div class="status-card" :class="{ danger: mensagemErro }">
-          <span class="status-dot"></span>
-          <div>
-            <strong>{{ mensagemErro ? 'Atencao' : 'Online' }}</strong>
-            <span>{{ mensagemErro || 'Dados sincronizados' }}</span>
-          </div>
+      <div v-if="carregando && !produtos.length" class="empty">
+        A carregar produtos...
+      </div>
+      <div v-else-if="!produtos.length" class="empty">
+        Nenhum produto registado. Clique em "Novo produto" para comecar.
+      </div>
+      <div v-else class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Quantidade</th>
+              <th>Preco unit.</th>
+              <th>Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="produto in produtos" :key="produto.id">
+              <td><div class="name">{{ produto.nome }}</div></td>
+              <td><span class="qty">{{ produto.quantidade }}</span></td>
+              <td>{{ formatarMoeda(produto.preco) }}</td>
+              <td class="total">{{ formatarMoeda(Number(produto.quantidade) * Number(produto.preco)) }}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="btn-sm" type="button" @click="editar(produto)">Editar</button>
+                  <button class="btn-sm del" type="button" @click="remover(produto.id)">Remover</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="overlay" :class="{ open: modalAberto }" @click.self="fecharModal">
+      <div class="modal" role="dialog" aria-modal="true" :aria-label="editando ? 'Editar produto' : 'Novo produto'">
+        <div class="modal-header">
+          <h3>{{ editando ? 'Editar produto' : 'Novo produto' }}</h3>
+          <button class="btn-close" type="button" @click="fecharModal" aria-label="Fechar">x</button>
         </div>
-      </header>
-
-      <section class="metrics" aria-label="Resumo do inventario">
-        <article class="metric rose">
-          <span>Produtos</span>
-          <strong>{{ totalProdutos }}</strong>
-        </article>
-        <article class="metric plum">
-          <span>Unidades</span>
-          <strong>{{ totalUnidades }}</strong>
-        </article>
-        <article class="metric sage">
-          <span>Valor total</span>
-          <strong>{{ formatarMoeda(valorTotal) }}</strong>
-        </article>
-      </section>
-
-      <form class="product-form" @submit.prevent="salvar">
-        <div class="form-title">
-          <div>
-            <span class="eyebrow">{{ editando ? 'Produto selecionado' : 'Novo produto' }}</span>
-            <h2>{{ editando ? 'Atualizar cadastro' : 'Cadastrar item' }}</h2>
-          </div>
-
-          <button v-if="editando" type="button" class="soft-button" @click="limparFormulario">
-            Cancelar edicao
-          </button>
-        </div>
-
-        <div class="form-layout">
-          <fieldset class="field-group product-details">
-            <legend>Dados do produto</legend>
-            <label>
-              Nome do produto
-              <input v-model.trim="form.nome" required placeholder="Ex: Bolsa floral" />
-            </label>
-          </fieldset>
-
-          <fieldset class="field-group stock-details">
-            <legend>Estoque e preco</legend>
-            <div class="inline-fields">
-              <label>
-                Quantidade
-                <input v-model.number="form.quantidade" required min="0" type="number" placeholder="0" />
-              </label>
-
-              <label>
-                Preco
-                <input v-model.number="form.preco" required min="0" step="0.01" type="number" placeholder="0.00" />
-              </label>
+        <form @submit.prevent="salvar">
+          <div class="modal-body">
+            <div class="field">
+              <label for="nome">Nome do produto</label>
+              <input id="nome" v-model.trim="form.nome" required placeholder="Ex: Teclado USB" />
             </div>
-          </fieldset>
-
-          <div class="form-action">
-            <button class="primary-button" type="submit" :disabled="carregando">
-              {{ editando ? 'Salvar alteracoes' : 'Adicionar' }}
+            <div class="row2">
+              <div class="field">
+                <label for="quantidade">Quantidade</label>
+                <input id="quantidade" v-model.number="form.quantidade" required type="number" min="0" placeholder="0" />
+              </div>
+              <div class="field">
+                <label for="preco">Preco (MT)</label>
+                <input id="preco" v-model.number="form.preco" required type="number" min="0" step="0.01" placeholder="0.00" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" @click="fecharModal">Cancelar</button>
+            <button type="submit" class="btn-save" :disabled="carregando">
+              {{ editando ? 'Guardar alteracoes' : 'Guardar produto' }}
             </button>
           </div>
-        </div>
-      </form>
-
-      <section class="inventory-panel">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">Catalogo</span>
-            <h2>Produtos em estoque</h2>
-          </div>
-          <span class="count-pill">{{ totalProdutos }} itens</span>
-        </div>
-
-        <div v-if="carregando && !produtos.length" class="empty-state">
-          A carregar produtos...
-        </div>
-
-        <div v-else-if="!produtos.length" class="empty-state">
-          Nenhum produto registado.
-        </div>
-
-        <div v-else class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>Qtd.</th>
-                <th>Preco</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="produto in produtos" :key="produto.id">
-                <td>
-                  <div class="product-name">{{ produto.nome }}</div>
-                </td>
-                <td>
-                  <span class="quantity-badge">{{ produto.quantidade }}</span>
-                </td>
-                <td>{{ formatarMoeda(produto.preco) }}</td>
-                <td>{{ formatarMoeda(Number(produto.quantidade) * Number(produto.preco)) }}</td>
-                <td>
-                  <div class="actions">
-                    <button type="button" class="table-button edit" @click="editar(produto)">
-                      Editar
-                    </button>
-                    <button type="button" class="table-button delete" @click="remover(produto.id)">
-                      Eliminar
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </section>
+        </form>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -143,6 +117,7 @@ const produtos = ref([])
 const editando = ref(false)
 const carregando = ref(false)
 const mensagemErro = ref('')
+const modalAberto = ref(false)
 
 const form = ref({
   id: null,
@@ -154,12 +129,12 @@ const form = ref({
 const totalProdutos = computed(() => produtos.value.length)
 
 const totalUnidades = computed(() =>
-  produtos.value.reduce((total, produto) => total + Number(produto.quantidade || 0), 0)
+  produtos.value.reduce((total, p) => total + Number(p.quantidade || 0), 0)
 )
 
 const valorTotal = computed(() =>
   produtos.value.reduce(
-    (total, produto) => total + Number(produto.quantidade || 0) * Number(produto.preco || 0),
+    (total, p) => total + Number(p.quantidade || 0) * Number(p.preco || 0),
     0
   )
 )
@@ -172,13 +147,18 @@ const formatarMoeda = (valor) =>
   }).format(Number(valor || 0))
 
 const limparFormulario = () => {
-  form.value = {
-    id: null,
-    nome: '',
-    quantidade: '',
-    preco: ''
-  }
+  form.value = { id: null, nome: '', quantidade: '', preco: '' }
   editando.value = false
+}
+
+const abrirModal = () => {
+  limparFormulario()
+  modalAberto.value = true
+}
+
+const fecharModal = () => {
+  modalAberto.value = false
+  limparFormulario()
 }
 
 const carregar = async () => {
@@ -188,7 +168,7 @@ const carregar = async () => {
   try {
     const response = await axios.get(api)
     produtos.value = response.data
-  } catch (error) {
+  } catch {
     mensagemErro.value = 'Falha ao ligar ao servidor'
   } finally {
     carregando.value = false
@@ -206,9 +186,9 @@ const salvar = async () => {
       await axios.post(api, form.value)
     }
 
-    limparFormulario()
+    fecharModal()
     await carregar()
-  } catch (error) {
+  } catch {
     mensagemErro.value = 'Nao foi possivel guardar'
   } finally {
     carregando.value = false
@@ -218,6 +198,7 @@ const salvar = async () => {
 const editar = (produto) => {
   form.value = { ...produto }
   editando.value = true
+  modalAberto.value = true
 }
 
 const remover = async (id) => {
@@ -227,7 +208,7 @@ const remover = async (id) => {
   try {
     await axios.delete(`${api}?id=${id}`)
     await carregar()
-  } catch (error) {
+  } catch {
     mensagemErro.value = 'Nao foi possivel eliminar'
   } finally {
     carregando.value = false
@@ -239,21 +220,22 @@ onMounted(carregar)
 
 <style>
 :root {
-  color: #352737;
-  background: #fff7fb;
-  font-family: "Trebuchet MS", "Avenir Next", Candara, sans-serif;
+  color: #1e1320;
+  background: #faf7f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
 }
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    linear-gradient(135deg, rgba(246, 154, 191, 0.18), rgba(181, 153, 224, 0.16) 46%, rgba(150, 185, 166, 0.14)),
-    #fff7fb;
+  background: #faf7f9;
 }
 
 button,
@@ -263,285 +245,155 @@ input {
 
 button {
   border: 0;
+  cursor: pointer;
 }
 
-.page-shell {
-  min-height: 100vh;
-  padding: 30px;
-}
-
-.workspace {
-  width: min(1160px, 100%);
+.page {
+  max-width: 960px;
   margin: 0 auto;
-}
-
-.hero {
+  padding: 28px 24px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
   gap: 20px;
-  align-items: stretch;
-  margin-bottom: 18px;
+  position: relative;
+  min-height: 100vh;
 }
 
-.hero-copy,
-.status-card,
-.metric,
-.product-form,
-.inventory-panel {
-  border: 1px solid rgba(158, 93, 126, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 18px 48px rgba(133, 72, 108, 0.12);
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.hero-copy {
-  padding: 28px;
-}
-
-.hero-copy p {
-  max-width: 640px;
-  margin: 12px 0 0;
-  color: #7b6274;
-  font-size: 17px;
-  line-height: 1.55;
-}
-
-.eyebrow {
-  display: block;
-  margin-bottom: 7px;
-  color: #b34f7d;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-h1,
-h2 {
-  margin: 0;
-  color: #3a203e;
-  letter-spacing: 0;
-}
-
-h1 {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(36px, 6vw, 62px);
+.page-title {
+  font-size: 26px;
   font-weight: 700;
-  line-height: 0.98;
-}
-
-h2 {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 25px;
+  color: #1e1320;
+  letter-spacing: 0;
   line-height: 1.1;
 }
 
-.status-card {
-  display: flex;
+.page-sub {
+  font-size: 13px;
+  color: #9b7a8e;
+  margin-top: 3px;
+}
+
+.status {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 22px;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #f0e4eb;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9b7a8e;
 }
 
-.status-card strong,
-.status-card span {
-  display: block;
+.status.danger {
+  color: #993556;
+  border-color: #f4c0d1;
+  background: #fff5f8;
 }
 
-.status-card strong {
-  margin-bottom: 3px;
-  color: #4a2d4d;
-}
-
-.status-card span {
-  color: #7b6274;
-  font-size: 14px;
-}
-
-.status-dot {
-  width: 12px;
-  height: 12px;
+.dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #7aa68d;
-  box-shadow: 0 0 0 6px rgba(122, 166, 141, 0.17);
+  background: #d4537e;
+  box-shadow: 0 0 0 3px rgba(212, 83, 126, 0.15);
 }
 
-.status-card.danger .status-dot {
-  background: #d45172;
-  box-shadow: 0 0 0 6px rgba(212, 81, 114, 0.16);
+.danger .dot {
+  background: #993556;
+  box-shadow: 0 0 0 3px rgba(153, 53, 86, 0.15);
 }
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.metric {
-  position: relative;
-  overflow: hidden;
-  min-height: 118px;
-  padding: 20px;
-}
-
-.metric::before {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 6px;
-  content: "";
-}
-
-.metric.rose::before {
-  background: #df7aa2;
-}
-
-.metric.plum::before {
-  background: #8e5aa6;
-}
-
-.metric.sage::before {
-  background: #7aa68d;
-}
-
-.metric span {
-  display: block;
-  margin-bottom: 10px;
-  color: #836779;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.metric strong {
-  color: #3a203e;
-  font-size: clamp(28px, 5vw, 38px);
-  line-height: 1;
-}
-
-.product-form,
-.inventory-panel {
-  padding: 22px;
-}
-
-.product-form {
-  margin-bottom: 18px;
-}
-
-.form-title,
-.panel-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.form-layout {
-  display: grid;
-  grid-template-columns: minmax(260px, 1.15fr) minmax(260px, 1fr) 150px;
-  gap: 14px;
-  align-items: stretch;
-}
-
-.field-group {
-  min-width: 0;
-  margin: 0;
-  padding: 16px;
-  border: 1px solid rgba(179, 79, 125, 0.18);
-  border-radius: 8px;
-  background: #fffafd;
-}
-
-legend {
-  padding: 0 7px;
-  color: #9f4d78;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-label {
-  display: grid;
-  gap: 8px;
-  color: #6d5367;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.inline-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
-input {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
-  border: 1px solid rgba(154, 89, 124, 0.24);
-  border-radius: 8px;
-  background: #ffffff;
-  color: #352737;
-  outline: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+.metric {
+  background: #fff;
+  border: 1px solid #f0e4eb;
+  border-radius: 12px;
+  padding: 18px 20px;
 }
 
-input:focus {
-  border-color: #c9568d;
-  box-shadow: 0 0 0 4px rgba(201, 86, 141, 0.14);
+.metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #b89aaa;
+  margin-bottom: 8px;
 }
 
-.form-action {
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e1320;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.metric-value.accent {
+  color: #d4537e;
+}
+
+.table-card {
+  background: #fff;
+  border: 1px solid #f0e4eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-toolbar {
+  padding: 16px 20px;
   display: flex;
-  align-items: end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #f5eaf1;
+  flex-wrap: wrap;
 }
 
-.primary-button,
-.soft-button,
-.table-button {
-  min-height: 43px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 900;
-  transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
+.table-toolbar h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e1320;
+  margin-bottom: 2px;
 }
 
-.primary-button {
-  width: 100%;
-  background: #c9568d;
-  color: #ffffff;
-  box-shadow: 0 10px 24px rgba(201, 86, 141, 0.25);
+.table-toolbar span {
+  font-size: 12px;
+  color: #b89aaa;
+  font-weight: 500;
 }
 
-.primary-button:hover,
-.soft-button:hover,
-.table-button:hover {
-  transform: translateY(-1px);
-}
-
-.primary-button:disabled {
-  cursor: wait;
-  opacity: 0.72;
-  transform: none;
-}
-
-.soft-button {
-  padding: 0 13px;
-  border: 1px solid rgba(179, 79, 125, 0.24);
-  background: #fff5fa;
-  color: #9f4d78;
-}
-
-.count-pill {
+.btn-add {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 0 13px;
-  border-radius: 999px;
-  background: #f6e9f5;
-  color: #7d4d8f;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #d4537e;
+  color: #fff;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 700;
+  transition: background 130ms, transform 130ms;
   white-space: nowrap;
+}
+
+.btn-add:hover {
+  background: #b83d68;
+  transform: translateY(-1px);
 }
 
 .table-wrap {
@@ -550,115 +402,283 @@ input:focus {
 
 table {
   width: 100%;
-  min-width: 690px;
   border-collapse: collapse;
+  min-width: 520px;
+}
+
+thead tr {
+  background: #fdf8fb;
 }
 
 th {
-  padding: 0 12px 12px;
-  color: #9b7d91;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-align: left;
+  padding: 10px 20px;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #b89aaa;
+  text-align: left;
 }
 
 td {
-  padding: 15px 12px;
-  border-top: 1px solid #f0dfe9;
-  color: #5d475a;
-  font-size: 14px;
+  padding: 13px 20px;
+  font-size: 13px;
+  color: #4a3040;
+  border-top: 1px solid #faedf3;
   vertical-align: middle;
 }
 
-.product-name {
-  color: #3a203e;
-  font-weight: 900;
+tr:hover td {
+  background: #fdf6fa;
 }
 
-.quantity-badge {
+.name {
+  font-weight: 600;
+  color: #1e1320;
+  font-size: 14px;
+}
+
+.qty {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  min-height: 30px;
-  border-radius: 999px;
-  background: #f7edf6;
-  color: #7d4d8f;
-  font-weight: 900;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: #f5eaf3;
+  color: #72243e;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.actions {
+.total {
+  font-weight: 700;
+  color: #d4537e;
+}
+
+.row-actions {
   display: flex;
+  gap: 6px;
   justify-content: flex-end;
-  gap: 8px;
 }
 
-.table-button {
-  padding: 0 11px;
-  background: #f9eef4;
-  color: #944d76;
+.btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #f0e4eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #7a5570;
+  font-size: 11px;
+  font-weight: 700;
+  transition: background 120ms, border-color 120ms, color 120ms;
 }
 
-.table-button.edit {
-  background: #f5e7f7;
-  color: #7d4d8f;
+.btn-sm:hover {
+  background: #fdf2f7;
 }
 
-.table-button.delete {
-  background: #fff0f2;
-  color: #b43e62;
+.btn-sm.del:hover {
+  background: #fff0f3;
+  color: #993556;
+  border-color: #f4c0d1;
 }
 
-.empty-state {
-  display: grid;
-  min-height: 210px;
-  place-items: center;
-  border: 1px dashed rgba(179, 79, 125, 0.26);
-  border-radius: 8px;
-  background: #fffafd;
-  color: #8a6f82;
-  font-weight: 800;
+.empty {
+  padding: 48px 20px;
   text-align: center;
+  color: #c4a0b5;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
-@media (max-width: 940px) {
-  .hero,
-  .metrics,
-  .form-layout {
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 19, 32, 0.4);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.overlay.open {
+  display: flex;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #f0e4eb;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(30, 19, 32, 0.18);
+}
+
+.modal-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f5eaf1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e1320;
+}
+
+.btn-close {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: #f5eaf3;
+  color: #72243e;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms;
+}
+
+.btn-close:hover {
+  background: #f4c0d1;
+}
+
+.modal-body {
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #b89aaa;
+  margin-bottom: 6px;
+}
+
+.field input {
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid #edd6e5;
+  border-radius: 8px;
+  background: #fdf8fb;
+  color: #1e1320;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 130ms, box-shadow 130ms;
+}
+
+.field input:focus {
+  border-color: #d4537e;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(212, 83, 126, 0.1);
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-footer {
+  padding: 16px 22px;
+  border-top: 1px solid #f5eaf1;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #edd6e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #7a5570;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 120ms;
+}
+
+.btn-cancel:hover {
+  background: #fdf2f7;
+}
+
+.btn-save {
+  height: 38px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  background: #d4537e;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 130ms, transform 130ms;
+}
+
+.btn-save:hover {
+  background: #b83d68;
+  transform: translateY(-1px);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 20px 16px;
+  }
+
+  .metrics {
     grid-template-columns: 1fr;
   }
 
-  .form-action {
-    align-items: stretch;
-  }
-}
-
-@media (max-width: 640px) {
-  .page-shell {
-    padding: 18px;
+  .metric-value {
+    font-size: 24px;
   }
 
-  .hero-copy,
-  .status-card,
-  .product-form,
-  .inventory-panel,
-  .metric {
-    padding: 16px;
-  }
-
-  .form-title,
-  .panel-heading {
+  .topbar {
     flex-direction: column;
+    align-items: flex-start;
   }
 
-  .inline-fields {
+  .status {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .row2 {
     grid-template-columns: 1fr;
   }
 
-  h1 {
-    font-size: 38px;
+  .table-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-add {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>
