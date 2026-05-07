@@ -2,8 +2,8 @@
   <main class="page">
     <header class="topbar">
       <div>
-        <h1 class="page-title">Inventario</h1>
-        <p class="page-sub">Gestao de estoque</p>
+        <h1 class="page-title">Atelier de Bolos</h1>
+        <p class="page-sub">Gestao de sabores, encomendas e estoque</p>
       </div>
       <div class="status" :class="{ danger: mensagemErro }">
         <span class="dot"></span>
@@ -33,7 +33,7 @@
           <span>{{ totalProdutos }} {{ totalProdutos === 1 ? 'item registado' : 'itens registados' }}</span>
         </div>
         <button class="btn-add" type="button" @click="abrirModal">
-          + Novo produto
+          + Novo bolo
         </button>
       </div>
 
@@ -41,7 +41,7 @@
         A carregar produtos...
       </div>
       <div v-else-if="!produtos.length" class="empty">
-        Nenhum produto registado. Clique em "Novo produto" para comecar.
+        Nenhum produto registado. Clique em "Novo bolo" para comecar.
       </div>
       <div v-else class="table-wrap">
         <table>
@@ -75,14 +75,14 @@
     <div class="overlay" :class="{ open: modalAberto }" @click.self="fecharModal">
       <div class="modal" role="dialog" aria-modal="true" :aria-label="editando ? 'Editar produto' : 'Novo produto'">
         <div class="modal-header">
-          <h3>{{ editando ? 'Editar produto' : 'Novo produto' }}</h3>
+          <h3>{{ editando ? 'Editar bolo' : 'Novo bolo' }}</h3>
           <button class="btn-close" type="button" @click="fecharModal" aria-label="Fechar">x</button>
         </div>
         <form @submit.prevent="salvar">
           <div class="modal-body">
             <div class="field">
-              <label for="nome">Nome do produto</label>
-              <input id="nome" v-model.trim="form.nome" required placeholder="Ex: Teclado USB" />
+              <label for="nome">Nome do bolo</label>
+              <input id="nome" v-model.trim="form.nome" required placeholder="Ex: Bolo de chocolate" />
             </div>
             <div class="row2">
               <div class="field">
@@ -98,7 +98,7 @@
           <div class="modal-footer">
             <button type="button" class="btn-cancel" @click="fecharModal">Cancelar</button>
             <button type="submit" class="btn-save" :disabled="carregando">
-              {{ editando ? 'Guardar alteracoes' : 'Guardar produto' }}
+              {{ editando ? 'Guardar alteracoes' : 'Guardar bolo' }}
             </button>
           </div>
         </form>
@@ -220,8 +220,8 @@ onMounted(carregar)
 
 <style>
 :root {
-  color: #1e1320;
-  background: #faf7f9;
+  color: #2f2118;
+  background: #fff9f0;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
 }
@@ -235,7 +235,9 @@ onMounted(carregar)
 body {
   margin: 0;
   min-height: 100vh;
-  background: #faf7f9;
+  background:
+    radial-gradient(circle at top left, rgba(255, 210, 122, 0.34), transparent 34%),
+    linear-gradient(180deg, #fff9f0 0%, #fff3e3 100%);
 }
 
 button,
@@ -269,14 +271,14 @@ button {
 .page-title {
   font-size: 26px;
   font-weight: 700;
-  color: #1e1320;
+  color: #2f2118;
   letter-spacing: 0;
   line-height: 1.1;
 }
 
 .page-sub {
   font-size: 13px;
-  color: #9b7a8e;
+  color: #9a6b48;
   margin-top: 3px;
 }
 
@@ -286,30 +288,30 @@ button {
   gap: 7px;
   padding: 6px 14px;
   border-radius: 999px;
-  border: 1px solid #f0e4eb;
-  background: #fff;
+  border: 1px solid #f1d8bd;
+  background: #fffdf8;
   font-size: 12px;
   font-weight: 600;
-  color: #9b7a8e;
+  color: #8b5f3f;
 }
 
 .status.danger {
-  color: #993556;
-  border-color: #f4c0d1;
-  background: #fff5f8;
+  color: #9c3e2d;
+  border-color: #f0b8a7;
+  background: #fff3ef;
 }
 
 .dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #d4537e;
-  box-shadow: 0 0 0 3px rgba(212, 83, 126, 0.15);
+  background: #58a36f;
+  box-shadow: 0 0 0 3px rgba(88, 163, 111, 0.16);
 }
 
 .danger .dot {
-  background: #993556;
-  box-shadow: 0 0 0 3px rgba(153, 53, 86, 0.15);
+  background: #c85741;
+  box-shadow: 0 0 0 3px rgba(200, 87, 65, 0.15);
 }
 
 .metrics {
@@ -319,10 +321,11 @@ button {
 }
 
 .metric {
-  background: #fff;
-  border: 1px solid #f0e4eb;
+  background: #fffdf8;
+  border: 1px solid #f1d8bd;
   border-radius: 12px;
   padding: 18px 20px;
+  box-shadow: 0 12px 30px rgba(119, 72, 38, 0.08);
 }
 
 .metric-label {
@@ -330,27 +333,28 @@ button {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: #b89aaa;
+  color: #b98758;
   margin-bottom: 8px;
 }
 
 .metric-value {
   font-size: 28px;
   font-weight: 700;
-  color: #1e1320;
+  color: #2f2118;
   letter-spacing: 0;
   line-height: 1;
 }
 
 .metric-value.accent {
-  color: #d4537e;
+  color: #c45a2c;
 }
 
 .table-card {
-  background: #fff;
-  border: 1px solid #f0e4eb;
+  background: #fffdf8;
+  border: 1px solid #f1d8bd;
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 18px 42px rgba(119, 72, 38, 0.1);
 }
 
 .table-toolbar {
@@ -359,20 +363,20 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid #f5eaf1;
+  border-bottom: 1px solid #f3dfc9;
   flex-wrap: wrap;
 }
 
 .table-toolbar h2 {
   font-size: 15px;
   font-weight: 700;
-  color: #1e1320;
+  color: #2f2118;
   margin-bottom: 2px;
 }
 
 .table-toolbar span {
   font-size: 12px;
-  color: #b89aaa;
+  color: #b98758;
   font-weight: 500;
 }
 
@@ -383,16 +387,17 @@ button {
   height: 36px;
   padding: 0 16px;
   border-radius: 8px;
-  background: #d4537e;
+  background: #c45a2c;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
+  box-shadow: 0 10px 22px rgba(196, 90, 44, 0.22);
   transition: background 130ms, transform 130ms;
   white-space: nowrap;
 }
 
 .btn-add:hover {
-  background: #b83d68;
+  background: #9e3f1f;
   transform: translateY(-1px);
 }
 
@@ -407,7 +412,7 @@ table {
 }
 
 thead tr {
-  background: #fdf8fb;
+  background: #fff5e9;
 }
 
 th {
@@ -416,25 +421,25 @@ th {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #b89aaa;
+  color: #aa784e;
   text-align: left;
 }
 
 td {
   padding: 13px 20px;
   font-size: 13px;
-  color: #4a3040;
-  border-top: 1px solid #faedf3;
+  color: #5a3c2a;
+  border-top: 1px solid #f6e6d3;
   vertical-align: middle;
 }
 
 tr:hover td {
-  background: #fdf6fa;
+  background: #fff7ee;
 }
 
 .name {
   font-weight: 600;
-  color: #1e1320;
+  color: #2f2118;
   font-size: 14px;
 }
 
@@ -446,15 +451,15 @@ tr:hover td {
   height: 24px;
   padding: 0 8px;
   border-radius: 6px;
-  background: #f5eaf3;
-  color: #72243e;
+  background: #f7dfbb;
+  color: #70401e;
   font-size: 12px;
   font-weight: 700;
 }
 
 .total {
   font-weight: 700;
-  color: #d4537e;
+  color: #c45a2c;
 }
 
 .row-actions {
@@ -466,29 +471,29 @@ tr:hover td {
 .btn-sm {
   height: 28px;
   padding: 0 10px;
-  border: 1px solid #f0e4eb;
+  border: 1px solid #efd8bd;
   border-radius: 6px;
-  background: #fff;
-  color: #7a5570;
+  background: #fffdf8;
+  color: #7a5135;
   font-size: 11px;
   font-weight: 700;
   transition: background 120ms, border-color 120ms, color 120ms;
 }
 
 .btn-sm:hover {
-  background: #fdf2f7;
+  background: #fff2df;
 }
 
 .btn-sm.del:hover {
-  background: #fff0f3;
-  color: #993556;
-  border-color: #f4c0d1;
+  background: #fff1ec;
+  color: #9c3e2d;
+  border-color: #f0b8a7;
 }
 
 .empty {
   padding: 48px 20px;
   text-align: center;
-  color: #c4a0b5;
+  color: #bd8c62;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.6;
@@ -498,7 +503,7 @@ tr:hover td {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(30, 19, 32, 0.4);
+  background: rgba(47, 33, 24, 0.44);
   z-index: 100;
   align-items: center;
   justify-content: center;
@@ -510,18 +515,18 @@ tr:hover td {
 }
 
 .modal {
-  background: #fff;
+  background: #fffdf8;
   border-radius: 16px;
-  border: 1px solid #f0e4eb;
+  border: 1px solid #f1d8bd;
   width: 100%;
   max-width: 400px;
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(30, 19, 32, 0.18);
+  box-shadow: 0 24px 60px rgba(47, 33, 24, 0.2);
 }
 
 .modal-header {
   padding: 18px 22px;
-  border-bottom: 1px solid #f5eaf1;
+  border-bottom: 1px solid #f3dfc9;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -531,7 +536,7 @@ tr:hover td {
 .modal-header h3 {
   font-size: 16px;
   font-weight: 700;
-  color: #1e1320;
+  color: #2f2118;
 }
 
 .btn-close {
@@ -539,8 +544,8 @@ tr:hover td {
   height: 30px;
   border: none;
   border-radius: 6px;
-  background: #f5eaf3;
-  color: #72243e;
+  background: #f7dfbb;
+  color: #70401e;
   font-size: 20px;
   font-weight: 300;
   line-height: 1;
@@ -551,7 +556,7 @@ tr:hover td {
 }
 
 .btn-close:hover {
-  background: #f4c0d1;
+  background: #efc98f;
 }
 
 .modal-body {
@@ -566,7 +571,7 @@ tr:hover td {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #b89aaa;
+  color: #aa784e;
   margin-bottom: 6px;
 }
 
@@ -574,19 +579,19 @@ tr:hover td {
   width: 100%;
   height: 42px;
   padding: 0 13px;
-  border: 1px solid #edd6e5;
+  border: 1px solid #efd8bd;
   border-radius: 8px;
-  background: #fdf8fb;
-  color: #1e1320;
+  background: #fff7ee;
+  color: #2f2118;
   font-size: 14px;
   outline: none;
   transition: border-color 130ms, box-shadow 130ms;
 }
 
 .field input:focus {
-  border-color: #d4537e;
+  border-color: #c45a2c;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(212, 83, 126, 0.1);
+  box-shadow: 0 0 0 3px rgba(196, 90, 44, 0.12);
 }
 
 .row2 {
@@ -597,7 +602,7 @@ tr:hover td {
 
 .modal-footer {
   padding: 16px 22px;
-  border-top: 1px solid #f5eaf1;
+  border-top: 1px solid #f3dfc9;
   display: flex;
   gap: 10px;
   justify-content: flex-end;
@@ -606,17 +611,17 @@ tr:hover td {
 .btn-cancel {
   height: 38px;
   padding: 0 16px;
-  border: 1px solid #edd6e5;
+  border: 1px solid #efd8bd;
   border-radius: 8px;
-  background: #fff;
-  color: #7a5570;
+  background: #fffdf8;
+  color: #7a5135;
   font-size: 13px;
   font-weight: 600;
   transition: background 120ms;
 }
 
 .btn-cancel:hover {
-  background: #fdf2f7;
+  background: #fff2df;
 }
 
 .btn-save {
@@ -624,7 +629,7 @@ tr:hover td {
   padding: 0 20px;
   border: none;
   border-radius: 8px;
-  background: #d4537e;
+  background: #c45a2c;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -632,7 +637,7 @@ tr:hover td {
 }
 
 .btn-save:hover {
-  background: #b83d68;
+  background: #9e3f1f;
   transform: translateY(-1px);
 }
 
